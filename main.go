@@ -137,7 +137,6 @@ func main() {
 
 		// Handling reflection check
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "\nERR %s on PARAM: %s\n", c.url, c.param)
 			return
 		}
 
@@ -153,7 +152,7 @@ func main() {
 		url_scan := c.url
 		url_param := c.param
 		ref_chars := []string{}
-		for _, char := range []string{"\"", "'", "<", ">"} {
+		for _, char := range []string{"\"", "'", "<", ">", "`"} {
 			var wasReflected bool
 
 			if checkDOM {

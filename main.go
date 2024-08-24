@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"bufio"
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,13 +15,14 @@ import (
 	"flag"
 	"os"
 	"context"
+	"github.com/corpix/uarand"
     "github.com/chromedp/chromedp"
 )
 
 var THREADS int 
 var REFLECT int = 0
 var DOMdelay int
-var userAgent string
+var userAgent string = uarand.GetRandom()
 
 // paramCheck represents a structure for holding URL and parameter information.
 type paramCheck struct {
@@ -44,7 +45,6 @@ func main() {
 	outputFile := "/tmp/reflxss-" + time.Now().Format("2006-01-02_15-04-05") + ".txt"
 	flag.StringVar(&outputFile, "o", outputFile, "Output File Location")
 
-	userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
 	flag.StringVar(&userAgent, "ua", userAgent, "User Agent Header")
 
 	var checkDOM bool
@@ -153,7 +153,7 @@ func main() {
 		url_scan := c.url
 		url_param := c.param
 		ref_chars := []string{}
-		for _, char := range []string{"\"", "'", "<", ">"} {
+		for _, char := range []string{"\"", "'", "<", ">", "`", "(",")"} {
 			var wasReflected bool
 
 			if checkDOM {
@@ -176,8 +176,7 @@ func main() {
 		if len(ref_chars) > 0 {
 			REFLECT++
 			
-			fmt.Printf("\n" + colorize("%s = %v", "214") + "\n%s\n", url_param, ref_chars, url_scan)
-
+			fmt.Printf("%s | %s", url_scan, colorize(fmt.Sprintf("%s = %+v", url_param, ref_chars), "214"))
 			if _, err := fmt.Fprintf(OutFile, "%s = %v @ %s\n", url_param, ref_chars, url_scan); err != nil {
 				fmt.Fprintf(os.Stderr, "Error writing to file: %v\n", err)
 			}
@@ -307,7 +306,7 @@ func checkReflected(targetURL string) ([]string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return out, err
 	}
